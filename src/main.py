@@ -1,20 +1,36 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 
 from src.notes.routers import router as notes_router
+from src.auth.base_config import auth_backend, fastapi_users
+from src.auth.schemas import UserCreate, UserRead
+from src.auth.models import User
+from src.auth.base_config import current_user
+
 
 app = FastAPI(
     title="Notes"
 )
 
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth",
+    tags=["Auth"],
+)
+
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["Auth"],
+)
 
 app.include_router(notes_router)
 
 
-# @app.get("/users/{user_id}")
-# def get_user(user_id: int):
-#     return [user for user in users if user.get("id") == user_id]
+@app.get("/protected-route")
+def protected_route(user: User = Depends(current_user)):
+    return f"Hello, {user.username}"
 
 
-# @app.get("/test")
-# def test(t1: int, t2: int = None):
-#     return "hello"
+@app.get("/unprotected-route")
+def unprotected_route():
+    return f"Hello, anonym"

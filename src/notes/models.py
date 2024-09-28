@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, List
 
-from sqlalchemy import Table, TIMESTAMP, Column, Integer, String, ForeignKey, text
+from sqlalchemy import Table, Column, Integer, ForeignKey, text
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from src.database import Base
@@ -46,8 +46,13 @@ class Note(Base):
 
     tags: Mapped[List[Tag]] = relationship(
         secondary=note_tag_table, 
-        back_populates="notes"
+        back_populates="notes",
+        cascade="all"
     )
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+
+    user: Mapped["User"] = relationship(back_populates="notes")
 
     # owner_id = Column(Integer, ForeignKey("users.id"))
     # owner = relationship("User", back_populates="items")

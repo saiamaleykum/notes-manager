@@ -7,6 +7,8 @@ from sqlalchemy.orm import selectinload, joinedload
 from src.notes.models import Note, Tag
 from src.notes.schemas import NoteCreate, NoteResponse
 from src.database import get_async_session
+from src.auth.base_config import current_user
+from src.auth.models import User
 
 
 router = APIRouter(
@@ -16,10 +18,15 @@ router = APIRouter(
 
 
 @router.post("", response_model=NoteResponse)
-async def create_note(note_data: NoteCreate, db: AsyncSession = Depends(get_async_session)):
+async def create_note(
+    note_data: NoteCreate, 
+    db: AsyncSession = Depends(get_async_session), 
+    user: User = Depends(current_user)
+):
     new_note = Note(
         title=note_data.title,
-        content=note_data.content
+        content=note_data.content,
+        user_id=user.id
     )
 
     for tag_name in note_data.tags:
@@ -43,8 +50,16 @@ async def create_note(note_data: NoteCreate, db: AsyncSession = Depends(get_asyn
     
 
 @router.get("s", response_model=List[NoteResponse])
-async def get_notes(tag: str = None, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_async_session)):
-    query = select(Note).options(selectinload(Note.tags)).offset(skip).limit(limit)
+async def get_notes(
+    tag: str = None, 
+    skip: int = 0, 
+    limit: int = 100, 
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_user)
+):
+    query = select(Note).filter_by(
+        user_id=user.id
+    ).options(selectinload(Note.tags)).offset(skip).limit(limit)
 
     if tag:
         query = query.join(Note.tags).filter(Tag.name == tag)
@@ -56,7 +71,11 @@ async def get_notes(tag: str = None, skip: int = 0, limit: int = 100, db: AsyncS
 
     
 @router.get("/{note_id}", response_model=NoteResponse)
-async def get_note(note_id: int, db: AsyncSession = Depends(get_async_session)):
+async def get_note(
+    note_id: int, 
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_user)
+):
     result = await db.execute(
         select(Note).filter_by(id=note_id).options(joinedload(Note.tags))
     )
@@ -64,13 +83,20 @@ async def get_note(note_id: int, db: AsyncSession = Depends(get_async_session)):
 
     if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
-        
+    
+    if note.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Note is not yours")
+
     return note
 
 
 @router.delete("/{note_id}", response_model=NoteResponse)
-async def delete_note(note_id: int, db: AsyncSession = Depends(get_async_session)):
-    note = await get_note(note_id, db)
+async def delete_note(
+    note_id: int, 
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_user)
+):
+    note = await get_note(note_id, db, user)
     await db.delete(note)
     await db.commit()
 
@@ -78,8 +104,13 @@ async def delete_note(note_id: int, db: AsyncSession = Depends(get_async_session
     
 
 @router.put("/{note_id}", response_model=NoteResponse)
-async def update_note(note_id: int, note_data: NoteCreate, db: AsyncSession = Depends(get_async_session)):
-    note = await get_note(note_id, db)
+async def update_note(
+    note_id: int, 
+    note_data: NoteCreate, 
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_user)
+):
+    note = await get_note(note_id, db, user)
 
     note.title = note_data.title
     note.content = note_data.content
