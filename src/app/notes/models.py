@@ -5,8 +5,8 @@ from typing import Annotated, List
 from sqlalchemy import Table, Column, Integer, ForeignKey, text
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 
-from src.database import Base
-from src.notes.utils import naive_utcnow
+from src.app.database import Base
+from src.app.notes.utils import naive_utcnow
 
 
 intpk = Annotated[int, mapped_column(primary_key=True)]

@@ -4,9 +4,9 @@ from fastapi import Depends, Request
 from fastapi_users import (BaseUserManager, IntegerIDMixin, exceptions, models,
                            schemas)
 
-from src.auth.models import User
-from src.auth.utils import get_user_db
-from src.config import SECRET_AUTH
+from src.app.auth.models import User
+from src.app.auth.utils import get_user_db
+from src.app.config import SECRET_AUTH
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):

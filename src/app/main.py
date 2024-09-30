@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Depends
 
-from src.notes.routers import router as notes_router
-from src.auth.base_config import auth_backend, fastapi_users
-from src.auth.schemas import UserCreate, UserRead
-from src.auth.models import User
-from src.auth.base_config import current_user
+from src.app.notes.routers import router as notes_router
+from src.app.auth.base_config import auth_backend, fastapi_users
+from src.app.auth.schemas import UserCreate, UserRead
+from src.app.auth.models import User
+from src.app.auth.base_config import current_user
 
 
 app = FastAPI(

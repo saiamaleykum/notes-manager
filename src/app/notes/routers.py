@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, delete, update
 from sqlalchemy.orm import selectinload, joinedload
 
-from src.notes.models import Note, Tag
-from src.notes.schemas import NoteCreate, NoteResponse
-from src.database import get_async_session
-from src.auth.base_config import current_user
-from src.auth.models import User
+from src.app.notes.models import Note, Tag
+from src.app.notes.schemas import NoteCreate, NoteResponse
+from src.app.database import get_async_session
+from src.app.auth.base_config import current_user
+from src.app.auth.models import User
 
 
 router = APIRouter(
